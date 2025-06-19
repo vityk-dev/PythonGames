@@ -17,3 +17,8 @@ x = input()
 coffee = CoffeMachine(1,2,3,4)
 result = coffee.dictHelp()
 print("Price is:" + str(result))
+
+#git init
+#git add .
+#git commit - m "123"
+#git push
