@@ -79,30 +79,51 @@ class Collectible:
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((600,600))
+    screen = pygame.display.set_mode((600, 600))
     pygame.display.set_caption("Maze")
     clock = pygame.time.Clock()
 
     maze = Maze("maze.png")
-    player = Player(100,100,maze)
-    collectible = Collectible(400,100)
-    collectible.checkCollision(player.rect)
+    player = Player(100, 100, maze)
+
+    collectibles = [
+        Collectible(400, 100),
+        Collectible(200, 200),
+        Collectible(300, 300)
+    ]
+
+    score = 0
+    font = pygame.font.SysFont(None, 36)
 
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
         player.binds()
 
+        for c in collectibles:
+            if c.checkCollision(player.rect):
+                score += 1
 
-        screen.fill((100,100,100))
+        screen.fill((100, 100, 100))
         maze.draw(screen)
-        collectible.draw(screen)
+        
+        for c in collectibles:
+            c.draw(screen)
+
         player.draw(screen)
+
+        score_text = font.render(f"Score: {score}", True, (0, 0, 0))
+        screen.blit(score_text, (10, 10))
+
         pygame.display.flip()
         clock.tick(60)
+
     pygame.quit()
+
+
 
 if __name__ == "__main__":
     main()
