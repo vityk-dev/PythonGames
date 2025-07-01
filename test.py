@@ -16,15 +16,20 @@ def simulate_bandwidth(num_routers,
         num_spike_users = num_users * spike_percentage // 100
         spike_users = set(random.sample(range(num_users), num_spike_users))
 
-        user_bandwidths = [
-            peak_bandwidth if i in spike_users else random.randint(*normal_bandwidth_range)
-            for i in range(num_users)
-        ]
+        user_bandwidths = []
+        for i in range(num_users):
+            if i in spike_users:
+                user_bandwidths.append(peak_bandwidth)
+            else:
+                user_bandwidth = random.triangular(normal_bandwidth_range[0],
+                                                   (normal_bandwidth_range[0] + normal_bandwidth_range[1]) / 2,
+                                                   normal_bandwidth_range[1] + 30)
+                user_bandwidths.append(user_bandwidth)
 
         total_required_bandwidth = sum(user_bandwidths)
 
         if verbose:
-            print(f"Run {run+1}: Required {total_required_bandwidth} Mbps, Available {total_bandwidth_mbps} Mbps")
+            print(f"Run {run+1}: Required {total_required_bandwidth:.2f} Mbps, Available {total_bandwidth_mbps} Mbps")
 
         if total_required_bandwidth > total_bandwidth_mbps:
             failures += 1
