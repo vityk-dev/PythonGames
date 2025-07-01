@@ -87,9 +87,10 @@ def main():
     player = Player(100, 100, maze)
 
     collectibles = [
-        Collectible(400, 100),
+        Collectible(50, 150),
         Collectible(200, 200),
-        Collectible(300, 300)
+        Collectible(300, 400),
+        Collectible(210,440)
     ]
 
     score = 0
@@ -106,6 +107,9 @@ def main():
         for c in collectibles:
             if c.checkCollision(player.rect):
                 score += 1
+                if score == 4:
+                    running = False
+                    break
 
         screen.fill((100, 100, 100))
         maze.draw(screen)
@@ -122,8 +126,6 @@ def main():
         clock.tick(60)
 
     pygame.quit()
-
-
 
 if __name__ == "__main__":
     main()
