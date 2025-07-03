@@ -66,22 +66,3 @@ t_price = cups * price
 print(cups)
 print(price)
 print(t_price)
-
-# speed, 0 to 100, consumption, horse power, tsngage, aerodynamics
-
-class Car:
-   def __init__(self,speed,consump,power,tangage,aero):
-      self.speed = speed
-      self.consump = consump
-      self.power = power
-      self.tangage = tangage
-      self.aero = aero
-
-   def auto(self):
-      listx = []
-      listx.append(self.speed,self.consump,self.power,self.tangage,self.aero)
-      print(listx)
-
-xyz = Car(220, 13, 600, 30, 15)
-xyz.auto
-      

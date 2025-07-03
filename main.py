@@ -39,6 +39,7 @@ class Player:
         self.speed = 5
         self.maze = maze
         self.color = (255,0,0)
+        self.inventory = []
 
     def move(self,dx,dy):
         old_pos = self.rect.topleft
@@ -61,10 +62,16 @@ class Player:
         pygame.draw.rect(screen,self.color,self.rect)
 
 class Collectible:
-    def __init__(self,x,y):
-        self.rect = pygame.Rect(x,y,30,30)
+    def __init__(self,x,y,name):
+        self.image_list = ["png/1.png",
+                           "png/2.png",
+                           "png/3.png",
+                           "png/4.png"
+        ]
+        self.rect = pygame.image.load(self.image_list[0])
         self.picked = False
         self.color = (0,255,0)
+        self.name = name
 
     def checkCollision(self,playerRect):
         if not self.picked and self.rect.colliderect(playerRect):
@@ -108,11 +115,19 @@ class Enemy:
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((600, 600))
+    SCREEN_WIDTH = 1100
+    SCREEN_HEIGHT = 800
+    UI_WIDTH = 400
+    GAME_UI_WIDTH = 700
+    
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Maze")
     clock = pygame.time.Clock()
+    game_rect = pygame.Rect(0, 0, GAME_UI_WIDTH,SCREEN_HEIGHT)
+    ui_rect = pygame.Rect(GAME_UI_WIDTH, 0, UI_WIDTH,SCREEN_HEIGHT)
 
-    maze = Maze("maze.png")
+
+    maze = Maze("png\maze.png")
     player = Player(100, 100, maze)
 
     enemies = [Enemy(250,100,maze),
@@ -120,10 +135,10 @@ def main():
     ]
 
     collectibles = [
-        Collectible(50, 150),
-        Collectible(200, 200),
-        Collectible(300, 400),
-        Collectible(210,440)
+        Collectible(50, 150, "Key"),
+        Collectible(200, 200, "Key"),
+        Collectible(300, 400, "Key"),
+        Collectible(210,440, "Key")
     ]
 
     score = 0
@@ -143,6 +158,7 @@ def main():
             for c in collectibles:
                 if c.checkCollision(player.rect):
                     score += 1
+                    player.inventory.append(f"{c.name} {score}")
                     if score == 4:
                         game_over = True
                         running = False
@@ -160,6 +176,9 @@ def main():
                         break
 
         screen.fill((100, 100, 100))
+        pygame.draw.rect(screen, (50, 50, 150), game_rect)
+        pygame.draw.rect(screen, (0, 0, 0), ui_rect)
+
         maze.draw(screen)
         
         for c in collectibles:
@@ -170,11 +189,20 @@ def main():
 
         player.draw(screen)
 
+        ui_text = font.render(f"Inventory", True, (255,255,255))
         score_text = font.render(f"Score: {score}", True, (0, 0, 0))
         life_text = font.render(f"Life:{life}", True, (255,0,0))
+        ui_text_rect = ui_text.get_rect(center = (GAME_UI_WIDTH + UI_WIDTH // 2, SCREEN_HEIGHT // 14))
+
+        for index, i in enumerate(player.inventory):
+            item_text = font.render(i, True, (255,255,255))
+            screen.blit(item_text, (820, 100 + index * 30))
+
+
         screen.blit(score_text, (10, 10))
         screen.blit(life_text, (10, 40))
-
+        screen.blit(ui_text,(ui_text_rect))
+        
         pygame.display.flip()
         clock.tick(60)
 

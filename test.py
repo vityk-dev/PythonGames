@@ -48,7 +48,7 @@ def simulate_bandwidth(num_routers,
 simulate_bandwidth(
     num_routers=2,
     bandwidth_per_router_gbps=1,
-    num_users=39,
+    num_users=35,
     normal_bandwidth_range=(40, 50),
     peak_bandwidth=90,
     spike_percentage_range=(10, 20),
