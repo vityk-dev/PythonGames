@@ -108,9 +108,18 @@ class Enemy:
 
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((600, 600))
+    SCREEN_WIDTH = 1000
+    SCREEN_HEIGHT = 800
+    UI_WIDTH = 200
+    GAME_UI_WIDTH = 800
+    
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Maze")
     clock = pygame.time.Clock()
+    game_rect = pygame.Rect(0, 0, GAME_UI_WIDTH,SCREEN_HEIGHT)
+    pygame.draw.rect(screen, (50, 50, 150), game_rect)
+    ui_rect = pygame.Rect(800, 0, UI_WIDTH,SCREEN_HEIGHT)
+    pygame.draw.rect(screen, (0, 0, 0), ui_rect)
 
     maze = Maze("maze.png")
     player = Player(100, 100, maze)
