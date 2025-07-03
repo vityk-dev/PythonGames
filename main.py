@@ -1,5 +1,4 @@
-import pygame
-
+import pygame, time
 
 class Maze:
     def __init__(self,imageP):
@@ -77,6 +76,36 @@ class Collectible:
         if not self.picked:
             pygame.draw.rect(screen,self.color,self.rect)
 
+class Enemy:
+    def __init__(self,x,y,maze):
+        self.rect = pygame.Rect(x,y,10,10)
+        self.maze = maze
+        self.speed = 2
+        self.direction = -1
+        self.hit_time = 0
+
+    def moveY(self):
+        old_y = self.rect.y
+        self.rect.y += self.speed * self.direction
+        if not self.maze.movement(self.rect):
+            self.rect.y = old_y
+            self.direction *= -1
+
+        # old_x = self.rect.x
+        # self.rect.x += self.speed * self.direction
+        # if not self.maze.movement(self.rect):
+        #     self.rect.x = old_x
+        #     self.direction *= -1
+        
+    def check1(self,player):
+        return self.rect.colliderect(player)
+    
+    def can_damage(self):
+        return time.time() - self.hit_time > 1
+    
+    def draw(self,screen):
+        pygame.draw.rect(screen,(0,0,255), self.rect)
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((600, 600))
@@ -86,6 +115,10 @@ def main():
     maze = Maze("maze.png")
     player = Player(100, 100, maze)
 
+    enemies = [Enemy(250,100,maze),
+             
+    ]
+
     collectibles = [
         Collectible(50, 150),
         Collectible(200, 200),
@@ -94,22 +127,37 @@ def main():
     ]
 
     score = 0
+    life = 3
     font = pygame.font.SysFont(None, 36)
 
+    game_over = False
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                game_over = True
+        
+        if not game_over:
+            player.binds()
+            for c in collectibles:
+                if c.checkCollision(player.rect):
+                    score += 1
+                    if score == 4:
+                        game_over = True
+                        running = False
+                        break
 
-        player.binds()
-
-        for c in collectibles:
-            if c.checkCollision(player.rect):
-                score += 1
-                if score == 4:
-                    running = False
-                    break
+            for e in enemies:
+                e.moveY()
+                if e.check1(player.rect) and e.can_damage():
+                    life -= 1
+                    e.hit_time = time.time()
+                    print("Player hit! Remaining lives:", life)
+                    if life == 0:
+                        game_over = True
+                        running = False
+                        break
 
         screen.fill((100, 100, 100))
         maze.draw(screen)
@@ -117,10 +165,15 @@ def main():
         for c in collectibles:
             c.draw(screen)
 
+        for e in enemies:
+            e.draw(screen)
+
         player.draw(screen)
 
         score_text = font.render(f"Score: {score}", True, (0, 0, 0))
+        life_text = font.render(f"Life:{life}", True, (255,0,0))
         screen.blit(score_text, (10, 10))
+        screen.blit(life_text, (10, 40))
 
         pygame.display.flip()
         clock.tick(60)
