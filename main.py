@@ -69,7 +69,7 @@ class Collectible:
                            "png/3.png",
                            "png/4.png"
         ]
-        self.image = pygame.image.load(self.image_list[0]) -> self.rect
+        self.image = pygame.image.load(self.image_list[0])
         self.picked = False
         self.color = (0,255,0)
         self.name = name
