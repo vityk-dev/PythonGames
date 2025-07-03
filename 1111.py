@@ -62,13 +62,19 @@ class Player:
         pygame.draw.rect(screen,self.color,self.rect)
 
 class Collectible:
-    def __init__(self,x,y,name,image_path):
-        load_image = pygame.image.load(image_path)
-        self.image = pygame.transform.scale(load_image,(40,40))
-        self.rect = self.image.get_rect(topleft = (x,y))
+    def __init__(self,x,y,name):
+        self.rect = pygame.Rect(x,y,40,40)
+        self.image_list = ["png/1.png",
+                           "png/2.png",
+                           "png/3.png",
+                           "png/4.png"
+        ]
+        for i in range(len(self.image_list)):
+            self.image = pygame.image.load(self.image_list[i])
+        self.image = pygame.transform.scale(self.image, (40, 40))
         self.picked = False
+        self.color = (0,255,0)
         self.name = name
-        self.image_path = image_path
 
     def checkCollision(self,playerRect):
         if not self.picked and self.rect.colliderect(playerRect):
@@ -78,7 +84,8 @@ class Collectible:
     
     def draw(self,screen):
         if not self.picked:
-            pygame.draw.rect(screen,(255,0,255),self.rect)
+            pygame.draw.rect(screen,self.color,self.rect)
+            screen.blit(self.image, self.rect)
 
 class Enemy:
     def __init__(self,x,y,maze):
@@ -126,16 +133,15 @@ def main():
 
     maze = Maze("png\maze.png")
     player = Player(100, 100, maze)
-
     enemies = [Enemy(250,100,maze),
              
     ]
 
     collectibles = [
-        Collectible(50, 150, "Key", r"png\1.png"),
-        Collectible(200, 200, "Key", r"png\2.png"),
-        Collectible(300, 400, "Key", r"png\3.png"),
-        Collectible(210,440, "Key", r"png\4.png")
+        Collectible(50, 150, "Key"),
+        Collectible(200, 200, "Key"),
+        Collectible(300, 400, "Key"),
+        Collectible(210,440, "Key")
     ]
 
     score = 0
@@ -155,7 +161,7 @@ def main():
             for c in collectibles:
                 if c.checkCollision(player.rect):
                     score += 1
-                    player.inventory.append(f"{c.name}")
+                    player.inventory.append(f"{c.name} {score}")
                     if score == 4:
                         game_over = True
                         running = False
@@ -193,8 +199,8 @@ def main():
 
         for index, i in enumerate(player.inventory):
             item_text = font.render(i, True, (255,255,255))
-            screen.blit(item_text, (GAME_UI_WIDTH + 20, 100 + index * 30))
-            screen.blit(item_text, (GAME_UI_WIDTH + 50, 100 + index * 30))
+            screen.blit(item_text, (820, 100 + index * 30))
+
 
         screen.blit(score_text, (10, 10))
         screen.blit(life_text, (10, 40))
