@@ -69,7 +69,10 @@ class Collectible:
                            "png/3.png",
                            "png/4.png"
         ]
-        self.image = pygame.image.load(self.image_list[0])
+        for i in range(len(self.image_list)):
+            self.image = pygame.image.load(self.image_list[i])
+            i+=1
+        self.image = pygame.transform.scale(self.image, (10, 10))
         self.picked = False
         self.color = (0,255,0)
         self.name = name
@@ -83,6 +86,7 @@ class Collectible:
     def draw(self,screen):
         if not self.picked:
             pygame.draw.rect(screen,self.color,self.rect)
+            screen.blit(self.image, self.rect)
 
 class Enemy:
     def __init__(self,x,y,maze):
@@ -128,7 +132,7 @@ def main():
     ui_rect = pygame.Rect(GAME_UI_WIDTH, 0, UI_WIDTH,SCREEN_HEIGHT)
 
 
-    maze = Maze("png\maze.png")
+    maze = Maze("maze.png")
     player = Player(100, 100, maze)
 
     enemies = [Enemy(250,100,maze),
@@ -159,7 +163,7 @@ def main():
             for c in collectibles:
                 if c.checkCollision(player.rect):
                     score += 1
-                    player.inventory.append(f"{c.name} {score}")
+                    player.inventory.append(c.name)
                     if score == 4:
                         game_over = True
                         running = False
@@ -196,8 +200,13 @@ def main():
         ui_text_rect = ui_text.get_rect(center = (GAME_UI_WIDTH + UI_WIDTH // 2, SCREEN_HEIGHT // 14))
 
         for index, i in enumerate(player.inventory):
-            item_text = font.render(i, True, (255,255,255))
+            item_text = font.render(f"{index + 1}. {i}", True, (255,255,255))
             screen.blit(item_text, (820, 100 + index * 30))
+            for c in collectibles:
+                if c.name == i and c.picked:
+                    screen.blit(c.image, (GAME_UI_WIDTH + 20, 100 + index * 30))
+                    break
+
 
 
         screen.blit(score_text, (10, 10))
