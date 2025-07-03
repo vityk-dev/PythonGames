@@ -78,7 +78,7 @@ class Collectible:
     
     def draw(self,screen):
         if not self.picked:
-            pygame.draw.rect(screen,(255,0,255),self.rect)
+            screen.blit(self.image,self.rect.topleft)
 
 class Enemy:
     def __init__(self,x,y,maze):
@@ -132,10 +132,10 @@ def main():
     ]
 
     collectibles = [
-        Collectible(50, 150, "Key", r"png\1.png"),
-        Collectible(200, 200, "Key", r"png\2.png"),
-        Collectible(300, 400, "Key", r"png\3.png"),
-        Collectible(210,440, "Key", r"png\4.png")
+        Collectible(50, 150, "Key", "png/1.png"),
+        Collectible(200, 200, "Key", "png/2.png"),
+        Collectible(300, 400, "Key", "png/3.png"),
+        Collectible(210,440, "Key", "png/4.png")
     ]
 
     score = 0
@@ -155,7 +155,7 @@ def main():
             for c in collectibles:
                 if c.checkCollision(player.rect):
                     score += 1
-                    player.inventory.append(f"{c.name}")
+                    player.inventory.append(f"{c.name}{c.image}")
                     if score == 4:
                         game_over = True
                         running = False
@@ -185,16 +185,20 @@ def main():
             e.draw(screen)
 
         player.draw(screen)
-
-        ui_text = font.render(f"Inventory", True, (255,255,255))
         score_text = font.render(f"Score: {score}", True, (0, 0, 0))
         life_text = font.render(f"Life:{life}", True, (255,0,0))
+
+        ui_text = font.render(f"Inventory", True, (255,255,255))
         ui_text_rect = ui_text.get_rect(center = (GAME_UI_WIDTH + UI_WIDTH // 2, SCREEN_HEIGHT // 14))
 
-        for index, i in enumerate(player.inventory):
-            item_text = font.render(i, True, (255,255,255))
+        for index, name_text in enumerate(player.inventory):
+            item_text = font.render(f"{index + 1}{name_text}", True, (255,255,255))
             screen.blit(item_text, (GAME_UI_WIDTH + 20, 100 + index * 30))
-            screen.blit(item_text, (GAME_UI_WIDTH + 50, 100 + index * 30))
+            for i in collectibles:
+                if i.name == name_text and i.picked:
+                    i.image = pygame.transform.scale(i.image,(5,5))
+                    screen.blit(i.image, (GAME_UI_WIDTH + 50, 100 + index * 30))
+                    break
 
         screen.blit(score_text, (10, 10))
         screen.blit(life_text, (10, 40))
