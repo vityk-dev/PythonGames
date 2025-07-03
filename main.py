@@ -62,17 +62,12 @@ class Player:
         pygame.draw.rect(screen,self.color,self.rect)
 
 class Collectible:
-    def __init__(self,x,y,name):
-        self.rect = pygame.Rect(x,y,10,10)
-        self.image_list = ["png/1.png",
-                           "png/2.png",
-                           "png/3.png",
-                           "png/4.png"
-        ]
-        self.image = pygame.image.load(self.image_list[0]) -> self.rect
+    def __init__(self,x,y,name,image_path):
+        self.image = pygame.image.load(image_path)
+        self.rect = self.image.get_rect(topleft = (x,y))
         self.picked = False
-        self.color = (0,255,0)
         self.name = name
+        self.image_path = image_path
 
     def checkCollision(self,playerRect):
         if not self.picked and self.rect.colliderect(playerRect):
@@ -136,10 +131,10 @@ def main():
     ]
 
     collectibles = [
-        Collectible(50, 150, "Key"),
-        Collectible(200, 200, "Key"),
-        Collectible(300, 400, "Key"),
-        Collectible(210,440, "Key")
+        Collectible(50, 150, "Key", "png\1.png"),
+        Collectible(200, 200, "Key", "png\2.png"),
+        Collectible(300, 400, "Key", "png\3.png"),
+        Collectible(210,440, "Key", "png\4.png")
     ]
 
     score = 0
@@ -159,7 +154,7 @@ def main():
             for c in collectibles:
                 if c.checkCollision(player.rect):
                     score += 1
-                    player.inventory.append(f"{c.name} {score}")
+                    player.inventory.append(f"{c.name} {c.image}")
                     if score == 4:
                         game_over = True
                         running = False
@@ -197,8 +192,8 @@ def main():
 
         for index, i in enumerate(player.inventory):
             item_text = font.render(i, True, (255,255,255))
-            screen.blit(item_text, (820, 100 + index * 30))
-
+            screen.blit(item_text, (GAME_UI_WIDTH + 20, 100 + index * 30))
+            screen.blit(item_text, (GAME_UI_WIDTH + 50, 100 + index * 30))
 
         screen.blit(score_text, (10, 10))
         screen.blit(life_text, (10, 40))
