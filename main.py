@@ -63,12 +63,13 @@ class Player:
 
 class Collectible:
     def __init__(self,x,y,name):
+        self.rect = pygame.Rect(x,y,10,10)
         self.image_list = ["png/1.png",
                            "png/2.png",
                            "png/3.png",
                            "png/4.png"
         ]
-        self.rect = pygame.image.load(self.image_list[0])
+        self.image = pygame.image.load(self.image_list[0]) -> self.rect
         self.picked = False
         self.color = (0,255,0)
         self.name = name
@@ -115,29 +116,16 @@ class Enemy:
 
 def main():
     pygame.init()
-<<<<<<< HEAD
     SCREEN_WIDTH = 1100
     SCREEN_HEIGHT = 800
     UI_WIDTH = 400
     GAME_UI_WIDTH = 700
-=======
-    SCREEN_WIDTH = 1000
-    SCREEN_HEIGHT = 800
-    UI_WIDTH = 200
-    GAME_UI_WIDTH = 800
->>>>>>> fda1d86ca8c0dcd3dc40f06ba7de60d572de86b2
     
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Maze")
     clock = pygame.time.Clock()
     game_rect = pygame.Rect(0, 0, GAME_UI_WIDTH,SCREEN_HEIGHT)
-<<<<<<< HEAD
     ui_rect = pygame.Rect(GAME_UI_WIDTH, 0, UI_WIDTH,SCREEN_HEIGHT)
-=======
-    pygame.draw.rect(screen, (50, 50, 150), game_rect)
-    ui_rect = pygame.Rect(800, 0, UI_WIDTH,SCREEN_HEIGHT)
-    pygame.draw.rect(screen, (0, 0, 0), ui_rect)
->>>>>>> fda1d86ca8c0dcd3dc40f06ba7de60d572de86b2
 
 
     maze = Maze("png\maze.png")
