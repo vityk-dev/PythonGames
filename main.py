@@ -105,7 +105,7 @@ def main():
     GAME_UI_WIDTH = 700
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Maze with Inventory")
+    pygame.display.set_caption("Maze")
     clock = pygame.time.Clock()
     game_rect = pygame.Rect(0, 0, GAME_UI_WIDTH, SCREEN_HEIGHT)
     ui_rect = pygame.Rect(GAME_UI_WIDTH, 0, UI_WIDTH, SCREEN_HEIGHT)
