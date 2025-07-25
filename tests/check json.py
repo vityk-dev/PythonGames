@@ -52,10 +52,8 @@ def Life():
             x += 1
             dataDef["Смертей"] = x
             defaultSave()
-            x += 12
+            x += 1
             return x
-
-
 
 loadSave()             
 newLevel(0)
