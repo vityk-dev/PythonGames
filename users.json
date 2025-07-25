@@ -1,0 +1,27 @@
+[
+    {
+        "email": "андрей@gmail.com",
+        "password": "123",
+        "name": "андрей",
+        "balance": 0
+    },
+    {
+        "email": "123@gmail.com",
+        "password": "123345",
+        "name": "алекс",
+        "balance": 100.0
+    },
+    {
+        "email": "admin",
+        "password": "admin",
+        "name": "admin",
+        "balance": 0
+    },
+    {
+        "email": "a",
+        "password": "a",
+        "name": "a",
+        "balance": 0,
+        "banned": false
+    }
+]
