@@ -72,7 +72,7 @@ class Collectible:
             screen.blit(self.image, self.rect.topleft)
 
 
-class Enemy:
+class PatrolBot:
     def __init__(self, x, y, maze):
         self.rect = pygame.Rect(x, y, 10, 10)
         self.maze = maze
@@ -96,6 +96,13 @@ class Enemy:
     def draw(self, screen):
         pygame.draw.rect(screen, (0, 0, 255), self.rect)
 
+
+class FollowingBot:
+    
+
+
+class Trap:
+    
 
 def main():
     pygame.init()
