@@ -102,26 +102,30 @@ class FollowingEnemy:
         self.speed = 4
         self.hit_time = 0
         self.range = 200 
+        self.is_following = False
         
     def move(self, player_rect):
         dx = player_rect.centerx - self.rect.centerx
         dy = player_rect.centery - self.rect.centery
         distance = math.sqrt(dx**2 + dy**2)
         
-        if distance > self.range:
-            return
+        if distance <= self.range:
+            self.is_following = True
             
-        if distance > 0:
-            dx = dx / distance
-            dy = dy / distance
-            old_pos = self.rect.topleft
-            # if player_rect.centerx > dx:
-            #     self.speed * dx
-            self.rect.x += dx * self.speed
-            self.rect.y += dy * self.speed
+            if distance > 0:
+                dx = dx / distance
+                dy = dy / distance
+                old_pos = self.rect.topleft
+                # if player_rect.centerx > dx:
+                #     self.speed * dx
+                self.rect.x += dx * self.speed
+                self.rect.y += dy * self.speed
+                
+                if not self.maze.movement(self.rect):
+                    self.rect.topleft = old_pos
+        else:
+            self.is_following = False
             
-            if not self.maze.movement(self.rect):
-                self.rect.topleft = old_pos
 
     def check1(self, player):
         return self.rect.colliderect(player)
