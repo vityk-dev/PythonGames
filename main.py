@@ -1,4 +1,4 @@
-import pygame, time
+import pygame, time, math
 
 class Maze:
     def __init__(self, imageP):
@@ -71,8 +71,7 @@ class Collectible:
         if not self.picked:
             screen.blit(self.image, self.rect.topleft)
 
-
-class PatrolBot:
+class PatrolEnemy:
     def __init__(self, x, y, maze):
         self.rect = pygame.Rect(x, y, 10, 10)
         self.maze = maze
@@ -80,7 +79,7 @@ class PatrolBot:
         self.direction = -1
         self.hit_time = 0
 
-    def moveY(self):
+    def move(self):
         old_y = self.rect.y
         self.rect.y += self.speed * self.direction
         if not self.maze.movement(self.rect):
@@ -96,13 +95,45 @@ class PatrolBot:
     def draw(self, screen):
         pygame.draw.rect(screen, (0, 0, 255), self.rect)
 
+class FollowingEnemy:
+    def __init__(self, x, y, maze):
+        self.rect = pygame.Rect(x, y, 12, 12)
+        self.maze = maze
+        self.speed = 4
+        self.hit_time = 0
+        self.range = 200 
+        
+    def move(self, player_rect):
+        dx = player_rect.centerx - self.rect.centerx
+        dy = player_rect.centery - self.rect.centery
+        distance = math.sqrt(dx**2 + dy**2)
+        
+        if distance > self.range:
+            return
+            
+        if distance > 0:
+            dx = dx / distance
+            dy = dy / distance
+            old_pos = self.rect.topleft
+            # if player_rect.centerx > dx:
+            #     self.speed * dx
+            self.rect.x += dx * self.speed
+            self.rect.y += dy * self.speed
+            
+            if not self.maze.movement(self.rect):
+                self.rect.topleft = old_pos
 
-class FollowingBot:
-    
+    def check1(self, player):
+        return self.rect.colliderect(player)
 
+    def can_damage(self):
+        return time.time() - self.hit_time > 1
 
-class Trap:
-    
+    def draw(self, screen):
+        pygame.draw.rect(screen, (255, 0, 255), self.rect)
+
+# class Trap:
+
 
 def main():
     pygame.init()
@@ -121,7 +152,8 @@ def main():
     player = Player(100, 100, maze)
 
     enemies = [
-        Enemy(250, 100, maze),
+        PatrolEnemy(250, 100, maze),
+        FollowingEnemy(360, 380, maze)
     ]
 
     collectibles = [
@@ -130,7 +162,7 @@ def main():
         Collectible(320, 380, "Key 3", "png/3.png"),
         Collectible(205, 440, "Key 4", "png/4.png")
     ]
-
+    fenemy = (360, 380)
     score = 0
     life = 3
     font = pygame.font.SysFont(None, 36)
@@ -155,15 +187,20 @@ def main():
                         break
 
             for e in enemies:
-                e.moveY()
-                if e.check1(player.rect) and e.can_damage():
-                    life -= 1
-                    e.hit_time = time.time()
-                    print("Player hit! Remaining lives:", life)
-                    if life == 0:
-                        game_over = True
-                        running = False
-                        break
+                if hasattr(e,'move'):
+                    if isinstance(e, FollowingEnemy):
+                        e.move(player.rect)
+                    else:
+                        e.move()
+
+                    if e.check1(player.rect) and e.can_damage():
+                        life -= 1
+                        e.hit_time = time.time()
+                        print("Player hit! Remaining lives:", life)
+                        if life == 0:
+                            game_over = True
+                            running = False
+                            break
 
         screen.fill((255, 255, 255))
         pygame.draw.rect(screen, (255, 255, 255), game_rect)
