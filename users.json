@@ -23,5 +23,12 @@
         "name": "a",
         "balance": 0,
         "banned": false
+    },
+    {
+        "email": "aaaaa",
+        "password": "123",
+        "name": "ab",
+        "balance": 0,
+        "banned": false
     }
 ]
