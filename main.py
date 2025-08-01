@@ -1,4 +1,4 @@
-import pygame, time, math
+import pygame, time, math, sys
 
 class Maze:
     def __init__(self, imageP):
@@ -139,8 +139,8 @@ class FollowingEnemy:
         dx = player_rect.centerx - self.rect.centerx
         dy = player_rect.centery - self.rect.centery 
         distance = math.sqrt(dx**2 + dy**2)
-        direction = pygame.math.Vector2(player_rect.center) - pygame.math.Vector2(self.rect.center)
-        distance = direction.length()
+        # direction = pygame.math.Vector2(player_rect.center) - pygame.math.Vector2(self.rect.center)
+        # distance = direction.length()
 
         if distance <= self.range and self.see_player(player_rect):
             self.is_following = True
@@ -192,7 +192,65 @@ class FollowingEnemy:
     def draw(self, screen):
         pygame.draw.rect(screen, (255, 100, 255), self.rect)
 
-# class Trap:
+class Trap:
+    def __init__(self,x,y,maze):
+        self.rect = pygame.Rect(x,y,20,20)
+        self.maze = maze
+        self.hit_time = 0
+    
+    def check1(self,player):
+        return self.rect.colliderect(player)
+    
+    def can_damage(self):
+        return time.time() - self.hit_time > 1
+    
+    def draw(self,screen):
+        pygame.draw.rect(screen, (75, 0, 130), self.rect)
+        
+class Levels:
+    def __init__(self):
+        self.collectLvl = 0
+        self.collectibles = []
+        self.enemies = []
+        self.score = 0
+
+    def createEnemies(self, maze, selected_lvl):
+        enemies = []
+        if selected_lvl == 1:
+            enemies = [PatrolEnemy(250, 100, maze)]
+        elif selected_lvl == 2:
+            enemies = [
+                PatrolEnemy(250, 100, maze),
+                Trap(250, 140, maze)
+            ]
+        elif selected_lvl == 3:
+            enemies = [
+                PatrolEnemy(250, 100, maze),
+                FollowingEnemy(360, 380, maze),
+                Trap(250, 140, maze)
+            ]
+        return enemies
+
+    def createColectibles(self, selected_lvl):
+        collectibles = []
+        if selected_lvl == 1:
+            collectibles = [
+                Collectible(50, 150, "Key 1", "png/1.png"),
+            ]
+        elif selected_lvl == 2:
+            collectibles = [
+                Collectible(200, 180, "Key 2", "png/2.png"),
+                Collectible(320, 380, "Key 3", "png/3.png"),
+            ]
+        elif selected_lvl == 3:
+            collectibles = [
+                Collectible(50, 150, "Key 1", "png/1.png"),
+                Collectible(200, 180, "Key 2", "png/2.png"),
+                Collectible(320, 380, "Key 3", "png/3.png"),
+                Collectible(205, 440, "Key 4", "png/4.png")
+            ]
+        return collectibles
+
 
 def draw_text(surface, text, font, color, center):
     rendered = font.render(text, True, color)
@@ -253,8 +311,8 @@ def main():
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 36)
 
-    level = menu(screen, clock, font)
-    maze_path = f"png/maze{level}.png"
+    selected_level = menu(screen, clock, font)
+    maze_path = f"png/maze{selected_level}.png"
 
     game_rect = pygame.Rect(0, 0, GAME_UI_WIDTH, SCREEN_HEIGHT)
     ui_rect = pygame.Rect(GAME_UI_WIDTH, 0, UI_WIDTH, SCREEN_HEIGHT)
@@ -262,17 +320,9 @@ def main():
     maze = Maze(maze_path)
     player = Player(100, 100, maze)
 
-    enemies = [
-        PatrolEnemy(250, 100, maze),
-        FollowingEnemy(360, 380, maze)
-    ]
-
-    collectibles = [
-        Collectible(50, 150, "Key 1", "png/1.png"),
-        Collectible(200, 180, "Key 2", "png/2.png"),
-        Collectible(320, 380, "Key 3", "png/3.png"),
-        Collectible(205, 440, "Key 4", "png/4.png")
-    ]
+    levels = Levels()
+    enemies = levels.createEnemies(maze, selected_level)
+    collectibles = levels.createColectibles(selected_level)
 
     score = 0
     life = 3
@@ -292,25 +342,34 @@ def main():
                     score += 1
                     player.inventory.append(c)
                     if score == len(collectibles):
-                        game_over = True
-                        running = False
-                        break
-
-            for e in enemies:
-                if hasattr(e,'move'):
-                    if isinstance(e, FollowingEnemy):
-                        e.move(player.rect)
-                    else:
-                        e.move()
-
-                    if e.check1(player.rect) and e.can_damage():
-                        life -= 1
-                        e.hit_time = time.time()
-                        print("Player hit! Remaining lives:", life)
-                        if life == 0:
+                        selected_level += 1
+                        if selected_level > 3:
                             game_over = True
                             running = False
                             break
+                        maze = Maze(f"png/maze{selected_level}.png")
+                        player = Player(100, 100, maze)
+                        enemies = levels.createEnemies(maze, selected_level)
+                        collectibles = levels.createColectibles(selected_level)
+                        score = 0
+                        player.inventory = []
+
+            for e in enemies:
+                if isinstance(e, FollowingEnemy):
+                    e.move(player.rect)
+                elif isinstance(e, Trap):
+                    pass
+                else:
+                    e.move()
+
+                if e.check1(player.rect) and e.can_damage():
+                    life -= 1
+                    e.hit_time = time.time()
+                    print("Player hit! Remaining lives:", life)
+                    if life == 0:
+                        game_over = True
+                        running = False
+                        break
 
         screen.fill((255, 255, 255))
         pygame.draw.rect(screen, (255, 255, 255), game_rect)
