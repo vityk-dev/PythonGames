@@ -137,9 +137,11 @@ class FollowingEnemy:
         
     def move(self, player_rect):
         dx = player_rect.centerx - self.rect.centerx
-        dy = player_rect.centery - self.rect.centery
+        dy = player_rect.centery - self.rect.centery 
         distance = math.sqrt(dx**2 + dy**2)
-        
+        direction = pygame.math.Vector2(player_rect.center) - pygame.math.Vector2(self.rect.center)
+        distance = direction.length()
+
         if distance <= self.range and self.see_player(player_rect):
             self.is_following = True
             if distance > 0:
@@ -190,10 +192,54 @@ class FollowingEnemy:
     def draw(self, screen):
         pygame.draw.rect(screen, (255, 100, 255), self.rect)
 
-
-
 # class Trap:
 
+def draw_text(surface, text, font, color, center):
+    rendered = font.render(text, True, color)
+    rect = rendered.get_rect(center=center)
+    surface.blit(rendered, rect)
+
+def menu(screen, clock, font):
+    selected_level = 1
+    in_menu = True
+    while in_menu:
+        screen.fill((30, 30, 30))
+
+        draw_text(screen, "Maze", font, (255, 255, 255), (550, 150))
+        draw_text(screen, f"Уровень: {selected_level}", font, (200, 200, 200), (550, 300))
+
+        mouse = pygame.mouse.get_pos()
+        click = pygame.mouse.get_pressed()
+
+        start_rect = pygame.Rect(450, 400, 200, 50)
+        pygame.draw.rect(screen, (0, 200, 0), start_rect)
+        draw_text(screen, "Старт", font, (0, 0, 0), start_rect.center)
+
+        left_rect = pygame.Rect(370, 290, 50, 50)
+        pygame.draw.rect(screen, (100, 100, 255), left_rect)
+        draw_text(screen, "<", font, (255, 255, 255), left_rect.center)
+
+        right_rect = pygame.Rect(730, 290, 50, 50)
+        pygame.draw.rect(screen, (100, 100, 255), right_rect)
+        draw_text(screen, ">", font, (255, 255, 255), right_rect.center)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if start_rect.collidepoint(mouse):
+                    in_menu = False
+                elif left_rect.collidepoint(mouse):
+                    selected_level = max(1, selected_level - 1)
+                elif right_rect.collidepoint(mouse):
+                    selected_level = min(3, selected_level + 1)  # допустим 3 уровня
+
+        pygame.display.flip()
+        clock.tick(60)
+
+    return selected_level
 
 def main():
     pygame.init()
@@ -205,10 +251,15 @@ def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Maze")
     clock = pygame.time.Clock()
+    font = pygame.font.SysFont(None, 36)
+
+    level = menu(screen, clock, font)
+    maze_path = f"png/maze{level}.png"
+
     game_rect = pygame.Rect(0, 0, GAME_UI_WIDTH, SCREEN_HEIGHT)
     ui_rect = pygame.Rect(GAME_UI_WIDTH, 0, UI_WIDTH, SCREEN_HEIGHT)
 
-    maze = Maze("png/maze.png")
+    maze = Maze(maze_path)
     player = Player(100, 100, maze)
 
     enemies = [
@@ -222,13 +273,12 @@ def main():
         Collectible(320, 380, "Key 3", "png/3.png"),
         Collectible(205, 440, "Key 4", "png/4.png")
     ]
-    fenemy = (360, 380)
+
     score = 0
     life = 3
-    font = pygame.font.SysFont(None, 36)
-
     game_over = False
     running = True
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -295,6 +345,7 @@ def main():
         clock.tick(60)
 
     pygame.quit()
+
 
 
 if __name__ == "__main__":
