@@ -170,6 +170,7 @@ class FollowingEnemy:
         current_time = time.time()
         if current_time - self.direction_change_timer > self.direction_change_interval:
             self.direction_change_timer = current_time
+            #FIXME work with that to make enemy go patrol
             import random
             directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
             self.patrol_direction_x, self.patrol_direction_y = random.choice(directions)
@@ -217,7 +218,9 @@ class Levels:
     def createEnemies(self, maze, selected_lvl):
         enemies = []
         if selected_lvl == 1:
-            enemies = [PatrolEnemy(250, 100, maze)]
+            enemies = [
+                PatrolEnemy(250, 100, maze)
+            ]
         elif selected_lvl == 2:
             enemies = [
                 PatrolEnemy(250, 100, maze),
