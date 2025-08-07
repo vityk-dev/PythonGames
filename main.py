@@ -69,11 +69,14 @@ class Player:
 
     def binds(self, doors):
         keys = pygame.key.get_pressed()
-        dx = dy = 0
-        if keys[pygame.K_LEFT]: dx = -self.speed
-        if keys[pygame.K_RIGHT]: dx = self.speed
-        if keys[pygame.K_UP]: dy = -self.speed
-        if keys[pygame.K_DOWN]: dy = self.speed
+        dx = keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]
+        dy = keys[pygame.K_DOWN] - keys[pygame.K_UP]
+
+        length = math.hypot(dx, dy)
+        if length != 0:
+            dx = dx / length * self.speed
+            dy = dy / length * self.speed
+
         self.move(dx, dy, doors)
 
     def draw(self, screen):
@@ -222,7 +225,6 @@ class FollowingEnemy:
         current_time = time.time()
         if current_time - self.direction_change_timer > self.direction_change_interval:
             self.direction_change_timer = current_time
-            #FIXME work with that to make enemy go patrol
             import random
             directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
             self.patrol_direction_x, self.patrol_direction_y = random.choice(directions)
