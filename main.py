@@ -3,6 +3,7 @@ from levels import Levels
 from collectible import Collectible
 from door import Door
 from enemy import PatrolEnemy, FollowingEnemy, Trap
+from save_test import Save, Load
 
 #TODO!!!! Stats per each level: hp, level
 #TODO Добавить сохранение в json и систему уровней из json файла 
@@ -136,39 +137,44 @@ def menu(screen, clock, font, max_level):
 def saveGame(level,life,inventory,max_level):
     data = {
         "level": level,
-        "life": life,
         "inventory": [item.name for item in inventory],
         "max_level": max_level
     }
     with open("save.json", "w", encoding="utf-8") as file:
         json.dump(data, file, indent=4)
 
+    Save(level, life)
+
 def loadGame():
     try:
         with open("save.json", "r", encoding="utf-8") as file:
             data = json.load(file)
-            return data
     except (FileNotFoundError, json.JSONDecodeError):
-        return None
+        data = {"level": 1, "inventory": [], "max_level": 1}
+
+    level = data.get("level", 1)
+    inventory_names = data.get("inventory", [])
+    max_level = data.get("max_level", 1)
+
+    load_level_life = Load(level)
+    if load_level_life:
+        life = load_level_life.get("life", 3)
+    else:
+        # FIXME?
+        life = 3
+        # life = load_level_life.get("level", [[1]]) 
+
+    return level, life, inventory_names, max_level
+ 
+    # load lvl's life from life.json
         
 def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Maze")
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 36)
-    
-    load = loadGame()
-    if load:
-        level = load.get("level", 1)
-        life = load.get("life", 3)
-        t_inventory = load.get("inventory", [])
-        max_level = load.get("max_level", 1)
-    
-    else:
-        level = 1
-        life = 3
-        t_inventory = []
-        max_level = 1
+
+    level, life, t_inventory, max_level = loadGame()
     
     levels = Levels()
     selected_level = menu(screen, clock, font,max_level)
@@ -224,9 +230,6 @@ def main():
                         running = False
                         break
             #TODO screen of defeat
-            if game_over:
-                pass
-
                     
             for door in doors:
                 if player.rect.colliderect(door.rect):
@@ -243,7 +246,7 @@ def main():
                             running = False
                             break
                         else:
-                            saveGame(selected_level - 1, life, player.inventory, max_level)
+                            saveGame(selected_level - 1 , life, player.inventory, max_level)
                         maze = Maze(f"png/maze{selected_level}.png")
                         player = Player(100, 100, maze)
                         enemies = levels.createEnemies(maze, selected_level)
@@ -251,6 +254,13 @@ def main():
                         doors = levels.createDoors(selected_level)
                         score = 0
                         player.inventory.clear()
+                        load_level_life = Load(selected_level)
+                        if load_level_life:
+                            life = load_level_life.get("life", 3)
+                            print("go home")
+                        else:
+                            print("go sleep")
+                            life = 3
                         break 
         
         screen.fill((255, 255, 255))
@@ -302,3 +312,19 @@ if __name__ == "__main__":
     main()
 
 
+# l = {"lvl_1": [[1, 2]]}
+# if l:
+#     lv = l["lvl_1"][0][1]
+    
+# # print (lv)
+
+# item = [[1,2,3,3,2,2,4]]
+# for i in item:
+#     for x in i:
+#         if x == 2:
+#             print(x, end=" ")
+
+# print(" ".join(str(x) for i in item for x in i if x == 2))
+
+# all_twos = [str(x) for sublist in item for x in sublist if x == 2]
+# print(", ".join(all_twos))
