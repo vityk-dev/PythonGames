@@ -1,12 +1,24 @@
 import pygame, time, math, sys, json
+from levels import Levels
+from collectible import Collectible
+from door import Door
+from enemy import PatrolEnemy, FollowingEnemy, Trap
 
+#TODO!!!! Stats per each level: hp, level
 #TODO Добавить сохранение в json и систему уровней из json файла 
 #TODO Экран победы(переход в следующий уровень по нажатию, а не автоматически)
 #TODO Экран поражения
 #TODO изменить повтроряющийся код в функции чтоб можно было их просто вызвать
 #TODO сделать анимацию получения урона(полоска зеленная пока все нормально, и перекрашивается при получении урона на некоторое время)
-#FIXME починить систему движения(если ехать по диагонале двигаешся в два раза быстрее)
 #NOTE добавить звуки и удалить все не нужное из кода
+
+pygame.init()
+
+SCREEN_WIDTH = 1100
+SCREEN_HEIGHT = 800
+UI_WIDTH = 400
+GAME_UI_WIDTH = 700
+
 
 class Maze:
     def __init__(self, imageP):
@@ -43,7 +55,6 @@ class Player:
     def move(self, dx, dy, doors):
         old_pos = self.rect.topleft
         self.rect.x += dx
-        # self.rect.y += dy
         if not self.maze.movement(self.rect) or self.collidDoor(doors):
             self.rect.x = old_pos[0]
         old_pos_y = self.rect.topleft
@@ -51,16 +62,8 @@ class Player:
         if not self.maze.movement(self.rect) or self.collidDoor(doors):
             self.rect.y = old_pos[1]
         
-    
-   
     def collidDoor(self, doors) -> bool:
-        """_summary_  check if the player collided with the door
-        Args:
-            doors (_type_): _description_
 
-        Returns:
-            bool: _description_ true if collided false if not
-        """   """"""  
         for door in doors:
             if self.rect.colliderect(door.rect):
                 if not door.checkOp(self.inventory):
@@ -82,259 +85,15 @@ class Player:
     def draw(self, screen):
         pygame.draw.rect(screen, self.color, self.rect)
 
-class Collectible:
-    def __init__(self, x, y, name, image_path):
-        load_image = pygame.image.load(image_path)
-        self.image = pygame.transform.scale(load_image, (40, 40))
-        self.rect = self.image.get_rect(topleft=(x, y))
-        self.picked = False
-        self.name = name
-
-    def checkCollision(self, playerRect):
-        if not self.picked and self.rect.colliderect(playerRect):
-            self.picked = True
-            return True
-        return False
-
-    def draw(self, screen):
-        if not self.picked:
-            screen.blit(self.image, self.rect.topleft)
-        
-class Door:
-    """__summary__ игроку нужен правильный ключ с именем, чтоб открыть дверь, щоб пройти рівень потрібно доторкнутися до дверей та зібрати всі ключі для рівня. 
-    
-    """  
-    def __init__(self,x,y,req_key):
-        self.rect = pygame.Rect(x,y,20,20)
-        self.req_key = req_key
-        self.opened = False
-        
-    def checkOp(self, inventory):
-        for item in inventory:
-            if item.name == self.req_key:
-                self.opened = True
-                return True
-        return False
-        
-    def try_doors(self, inventory):
-        if not self.opened and self.checkOp(inventory):
-            self.opened = True
-    def draw(self,screen):
-        if not self.opened:
-            pygame.draw.rect(screen, (101,67,33), self.rect)
-        """"""
-        pass
-    pass
-
-class PatrolEnemy:
-    def __init__(self, x, y, maze):
-        self.rect = pygame.Rect(x, y, 10, 10)
-        self.maze = maze
-        self.speed = 1.5
-        self.direction = -1
-        self.hit_time = 0
-
-    def move(self):
-        old_y = self.rect.y
-        self.rect.y += self.speed * self.direction
-        if not self.maze.movement(self.rect):
-            self.rect.y = old_y
-            self.direction *= -1
-
-    def check1(self, player):
-        return self.rect.colliderect(player)
-
-    def can_damage(self):
-        return time.time() - self.hit_time > 1
-
-    def draw(self, screen):
-        pygame.draw.rect(screen, (0, 0, 255), self.rect)
-
-class FollowingEnemy:
-    def __init__(self, x, y, maze):
-        self.rect = pygame.Rect(x, y, 12, 12)
-        self.maze = maze
-        self.speed = 3
-        self.hit_time = 0
-        self.range = 150 
-        self.patrol_direction_x = 1
-        self.patrol_direction_y = 0
-        self.is_following = False
-        self.direction_change_timer = 0
-        self.direction_change_interval = 2 
-        
-        self.stuck_timer = 0
-        
-    def see_player(self, player_rect):
-        start_x, start_y = self.rect.center
-        end_x, end_y = player_rect.center
-        dx = end_x - start_x
-        dy = end_y - start_y
-        distance = math.sqrt(dx*dx + dy*dy)
-        
-        if distance == 0:
-            return True
-            
-        steps = int(distance // 5)
-        if steps == 0:
-            return True
-        
-        step_x = dx / steps
-        step_y = dy / steps
-        
-        for i in range(steps):
-            check_x = start_x + step_x * i
-            check_y = start_y + step_y * i
-            if self.maze.isWall(int(check_x), int(check_y)):
-                return False
-        
-        return True
-        
-    def move(self, player_rect):
-        dx = player_rect.centerx - self.rect.centerx
-        dy = player_rect.centery - self.rect.centery 
-        distance = math.sqrt(dx**2 + dy**2)
-        # direction = pygame.math.Vector2(player_rect.center) - pygame.math.Vector2(self.rect.center)
-        # distance = direction.length()
-
-        if distance <= self.range and self.see_player(player_rect):
-            self.is_following = True
-            if distance > 0:
-                dx = dx / distance
-                dy = dy / distance
-                old_pos = self.rect.topleft
-                
-                self.rect.x += dx * self.speed
-                self.rect.y += dy * self.speed
-                if not self.maze.movement(self.rect):
-                    self.rect.topleft = old_pos 
-                    self.stuck_timer += 1/60 
-                    if self.stuck_timer >= 5:  
-                        import random
-                        self.patrol_direction_x = random.choice([-1, 1])
-                        self.patrol_direction_y = random.choice([-1, 1])
-                        self.stuck_timer = 0
-                        self._patrol()
-                else:
-                    self.stuck_timer = 0 
-        else:
-            self.is_following = False
-            self._patrol()
-    
-    def _patrol(self):
-        current_time = time.time()
-        if current_time - self.direction_change_timer > self.direction_change_interval:
-            self.direction_change_timer = current_time
-            import random
-            directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)]
-            self.patrol_direction_x, self.patrol_direction_y = random.choice(directions)
-        
-        old_pos = self.rect.topleft
-        self.rect.x += self.patrol_direction_x * (self.speed * 0.5) 
-        self.rect.y += self.patrol_direction_y * (self.speed * 0.5)
-        
-        if not self.maze.movement(self.rect):
-            self.rect.topleft = old_pos
-            self.patrol_direction_x *= -1
-            self.patrol_direction_y *= -1
-
-    def check1(self, player):
-        return self.rect.colliderect(player)
-
-    def can_damage(self):
-        return time.time() - self.hit_time > 1
-
-    def draw(self, screen):
-        pygame.draw.rect(screen, (255, 100, 255), self.rect)
-        
-class Trap:
-    def __init__(self,x,y,maze):
-        self.rect = pygame.Rect(x,y,20,20)
-        self.maze = maze
-        self.hit_time = 0
-    
-    def check1(self,player):
-        return self.rect.colliderect(player)
-    
-    def can_damage(self):
-        return time.time() - self.hit_time > 1
-    
-    def draw(self,screen):
-        pygame.draw.rect(screen, (75, 0, 130), self.rect)
-        
-class Levels:
-    def __init__(self):
-        self.collectLvl = 0
-        self.collectibles = []
-        self.enemies = []
-        self.doors = []
-        self.score = 0
-
-    def createEnemies(self, maze, selected_lvl):
-        enemies = []
-        if selected_lvl == 1:
-            enemies = [
-                PatrolEnemy(250, 100, maze)
-            ]
-        elif selected_lvl == 2:
-            enemies = [
-                PatrolEnemy(250, 100, maze),
-                Trap(250, 140, maze)
-            ]
-        elif selected_lvl == 3:
-            enemies = [
-                PatrolEnemy(250, 100, maze),
-                FollowingEnemy(360, 380, maze),
-                Trap(250, 140, maze)
-            ]
-        return enemies
-
-    def createColectibles(self, selected_lvl):
-        collectibles = []
-        if selected_lvl == 1:
-            collectibles = [
-                Collectible(50, 150, "Key 1", "png/1.png"),
-            ]
-        elif selected_lvl == 2:
-            collectibles = [
-                Collectible(200, 180, "Key 2", "png/2.png"),
-                Collectible(320, 380, "Key 3", "png/3.png"),
-            ]
-        elif selected_lvl == 3:
-            collectibles = [
-                Collectible(50, 150, "Key 1", "png/1.png"),
-                Collectible(200, 180, "Key 2", "png/2.png"),
-                Collectible(320, 380, "Key 3", "png/3.png"),
-                Collectible(205, 440, "Key 4", "png/4.png")
-            ]
-        return collectibles
-    
-    def createDoors(self, selected_lvl):
-        doors = []
-        if selected_lvl == 1:
-            doors = [
-                Door(450, 150, "Key 1")
-            ]
-        elif selected_lvl == 2:
-            doors = [
-                Door(500, 180, "Key 2")
-            ]
-        elif selected_lvl == 3:
-            doors = [
-                Door(520, 380, "Key 3"),
-                Door(505, 440, "Key 4")
-            ]
-        return doors
-
-
 def draw_text(surface, text, font, color, center):
     rendered = font.render(text, True, color)
     rect = rendered.get_rect(center=center)
     surface.blit(rendered, rect)
-
-def menu(screen, clock, font):
+    
+def menu(screen, clock, font, max_level):
     selected_level = 1
     in_menu = True
+    
     while in_menu:
         screen.fill((30, 30, 30))
 
@@ -362,46 +121,75 @@ def menu(screen, clock, font):
                 sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if start_rect.collidepoint(mouse):
+                if start_rect.collidepoint(mouse) and selected_level <= max_level:
                     in_menu = False
                 elif left_rect.collidepoint(mouse):
                     selected_level = max(1, selected_level - 1)
                 elif right_rect.collidepoint(mouse):
-                    selected_level = min(3, selected_level + 1)  # допустим 3 уровня
+                    selected_level = min(max_level, selected_level + 1)
 
         pygame.display.flip()
         clock.tick(60)
 
     return selected_level
 
-def main():
-    pygame.init()
-    SCREEN_WIDTH = 1100
-    SCREEN_HEIGHT = 800
-    UI_WIDTH = 400
-    GAME_UI_WIDTH = 700
+def saveGame(level,life,inventory,max_level):
+    data = {
+        "level": level,
+        "life": life,
+        "inventory": [item.name for item in inventory],
+        "max_level": max_level
+    }
+    with open("save.json", "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=4)
 
+def loadGame():
+    try:
+        with open("save.json", "r", encoding="utf-8") as file:
+            data = json.load(file)
+            return data
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+        
+def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Maze")
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 36)
-
-    selected_level = menu(screen, clock, font)
+    
+    load = loadGame()
+    if load:
+        level = load.get("level", 1)
+        life = load.get("life", 3)
+        t_inventory = load.get("inventory", [])
+        max_level = load.get("max_level", 1)
+    
+    else:
+        level = 1
+        life = 3
+        t_inventory = []
+        max_level = 1
+    
+    levels = Levels()
+    selected_level = menu(screen, clock, font,max_level)
+    
     maze_path = f"png/maze{selected_level}.png"
+    maze = Maze(maze_path)
+    player = Player(100, 100, maze)
+    collectibles = levels.createColectibles(selected_level)
+    
+    for item in collectibles:
+        if item.name in t_inventory:
+            player.inventory.append(item)
+    
 
+    enemies = levels.createEnemies(maze, selected_level)
+    doors = levels.createDoors(selected_level)
+    
     game_rect = pygame.Rect(0, 0, GAME_UI_WIDTH, SCREEN_HEIGHT)
     ui_rect = pygame.Rect(GAME_UI_WIDTH, 0, UI_WIDTH, SCREEN_HEIGHT)
 
-    maze = Maze(maze_path)
-    player = Player(100, 100, maze)
-
-    levels = Levels()
-    enemies = levels.createEnemies(maze, selected_level)
-    collectibles = levels.createColectibles(selected_level)
-    doors = levels.createDoors(selected_level)
-
     score = 0
-    life = 3
     game_over = False
     running = True
 
@@ -413,6 +201,7 @@ def main():
 
         if not game_over:
             player.binds(doors)
+            
             for c in collectibles:
                 if c.checkCollision(player.rect):
                     score += 1
@@ -430,11 +219,11 @@ def main():
                     life -= 1
                     e.hit_time = time.time()
                     print("Player hit! Remaining lives:", life)
-                    if life == 0:
+                    if life <= 0:
                         game_over = True
                         running = False
                         break
-            
+            #TODO screen of defeat
             if game_over:
                 pass
 
@@ -447,17 +236,21 @@ def main():
                 if player.rect.colliderect(door.rect) and score == len(collectibles):
                     if all(door.checkOp(player.inventory) for door in doors):
                         selected_level += 1
+                        max_level = max(max_level, selected_level)
                         if selected_level > 3:
+                            saveGame(selected_level - 1, life, player.inventory, max_level)
                             game_over = True
                             running = False
                             break
+                        else:
+                            saveGame(selected_level - 1, life, player.inventory, max_level)
                         maze = Maze(f"png/maze{selected_level}.png")
                         player = Player(100, 100, maze)
                         enemies = levels.createEnemies(maze, selected_level)
                         collectibles = levels.createColectibles(selected_level)
                         doors = levels.createDoors(selected_level)
                         score = 0
-                        player.inventory = [] 
+                        player.inventory.clear()
                         break 
         
         screen.fill((255, 255, 255))
@@ -507,3 +300,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
